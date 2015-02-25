@@ -1,1 +1,1 @@
-# ruby_kaons
+# ruby_koans
