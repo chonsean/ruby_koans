@@ -29,32 +29,40 @@ require File.expand_path(File.dirname(__FILE__) + '/neo')
 #
 # Your goal is to write the score method.
 
-def score(dice)
-  score = 0
-  i = 1
-  counts = [0,0,0,0,0,0]
-  dice.each do |die|
-    counts[die-1] += 1
+class GetScore
+  REGEX_FOR_THREE_OF_SAME_NUMBER = /(\d)\1{2}/
+
+  def self.call(*args)
+    new(*args).call
   end
-  counts.each do |count|
-    if i == 1
-      score += ((count % 3) * 100)
-      score += ((count / 3) * 1000)
-    elsif i == 2
-      score += ((count / 3) * 100 * i)
-    elsif i == 3
-      score += ((count / 3) * 100 * i)
-    elsif i == 4
-      score += ((count / 3) * 100 * i)
-    elsif i == 5
-      score += ((count % 3) * 50)
-      score += ((count / 3) * 500)
-    elsif i == 6
-      score += ((count / 3) * 100 * i)
-    end
-    i += 1
+  
+  def initialize(dice)
+    @dice_string = dice.sort.join
+    @score = 0
   end
-  return score
+  
+  def call
+    award_for_triplets
+    @score += 100 * @dice_string.count('1')
+    @score += 50 * @dice_string.count('5')
+    @score
+  end
+  
+  def award_for_triplets
+    triplet = @dice_string[REGEX_FOR_THREE_OF_SAME_NUMBER]
+    return unless triplet
+    mark_triplet_as_counted
+    triplet_value = triplet[0]
+    @score += triplet_value == '1' ? 1000 : triplet_value.to_i * 100
+  end
+  
+  def mark_triplet_as_counted
+    @dice_string.gsub!(REGEX_FOR_THREE_OF_SAME_NUMBER, 'xxx')
+  end
+end
+
+def score(*args)
+  GetScore.call(*args)
 end
 
 class AboutScoringProject < Neo::Koan
@@ -97,5 +105,4 @@ class AboutScoringProject < Neo::Koan
     assert_equal 1200, score([1,1,1,1,1])
     assert_equal 1150, score([1,1,1,5,1])
   end
-
 end
